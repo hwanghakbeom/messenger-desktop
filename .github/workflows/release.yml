@@ -49,7 +49,13 @@ jobs:
       - run: npm ci
 
       - name: Build
-        run: npx electron-builder build --${{ matrix.platform }} --publish never
+        shell: bash
+        run: |
+          # Unset secrets that aren't configured; electron-builder treats an empty CSC_LINK as a path
+          for var in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
+            if [ -z "${!var}" ]; then unset "$var"; fi
+          done
+          npx electron-builder build --${{ matrix.platform }} --publish never
         env:
           # No Developer ID certificate yet: ad-hoc sign on macOS, skip signing on Windows.
           # To sign/notarize later, add CSC_LINK / CSC_KEY_PASSWORD and
