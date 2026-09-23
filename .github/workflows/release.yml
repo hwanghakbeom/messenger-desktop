@@ -1,0 +1,95 @@
+# Builds macOS and Windows installers.
+# - Push a tag like v1.2.3 → builds and publishes a GitHub Release
+# - Run manually (workflow_dispatch) → builds only, installers kept as workflow artifacts
+name: Build & Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+            files: |
+              dist/*.dmg
+              dist/*-mac.zip
+          - os: windows-latest
+            platform: win
+            files: |
+              dist/*.exe
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Check tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - name: Build
+        run: npx electron-builder build --${{ matrix.platform }} --publish never
+        env:
+          # No Developer ID certificate yet: ad-hoc sign on macOS, skip signing on Windows.
+          # To sign/notarize later, add CSC_LINK / CSC_KEY_PASSWORD and
+          # APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID as repository secrets.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.platform }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: installers-*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -la dist
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* \
+              --title "Messenger ${GITHUB_REF_NAME#v}" \
+              --generate-notes
+          fi

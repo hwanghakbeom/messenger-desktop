@@ -91,6 +91,17 @@ Windows:
 - `dist/Messenger-1.0.0-x64.exe` - 64-bit installer (NSIS)
 - `dist/Messenger-1.0.0-portable.exe` - Portable version (no installation)
 
+### Releasing
+
+Releases are built by GitHub Actions (`.github/workflows/release.yml`) on macOS and Windows runners.
+
+```bash
+npm version patch        # bumps package.json and creates tag vX.Y.Z
+git push --follow-tags   # the tag push triggers build + GitHub Release
+```
+
+The tag must match the `package.json` version. To build without releasing, run the workflow manually from the Actions tab; installers are attached to the run as artifacts.
+
 ### Code Signing and Notarization
 
 **macOS:**
