@@ -1,0 +1,129 @@
+{
+  "name": "messenger-desktop",
+  "version": "1.0.0",
+  "description": "Unofficial Facebook Messenger desktop app for macOS and Windows",
+  "main": "src/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hwanghakbeom/messenger-desktop.git"
+  },
+  "author": "hwanghakbeom",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:mac": "electron-builder build --mac",
+    "build:win": "electron-builder build --win",
+    "build:all": "electron-builder build --mac --win",
+    "dist": "electron-builder",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "electron-context-menu": "^4.1.1",
+    "electron-store": "^11.0.2"
+  },
+  "devDependencies": {
+    "@electron/notarize": "^3.1.1",
+    "electron": "^44.4.4",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.messenger.desktop",
+    "productName": "Messenger",
+    "files": [
+      "src/**/*",
+      "css/**/*",
+      "assets/icon.icns",
+      "assets/icon.png",
+      "package.json",
+      "!node_modules/**/{README,readme}.md",
+      "!node_modules/**/{test,__tests__,tests,powered-test,example,examples}/**",
+      "!node_modules/**/*.d.ts",
+      "!node_modules/.bin",
+      "!**/*.{md,markdown}",
+      "!LICENSE",
+      "!.gitignore"
+    ],
+    "extraFiles": [],
+    "asar": true,
+    "compression": "normal",
+    "electronLanguages": [
+      "en",
+      "ko"
+    ],
+    "mac": {
+      "category": "public.app-category.social-networking",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "darkModeSupport": true,
+      "minimumSystemVersion": "13.0.0"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "afterSign": "scripts/notarize.js",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Messenger"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}"
+    }
+  }
+}
