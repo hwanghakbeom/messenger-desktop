@@ -35,7 +35,7 @@ Download the latest build from [Releases](https://github.com/hwanghakbeom/messen
 | Windows (installer) | `Messenger-<version>-x64.exe` |
 | Windows (portable) | `Messenger-<version>-portable.exe` |
 
-The builds are not signed with a Developer ID certificate, so the OS will warn on first launch:
+The builds are unsigned, so the OS will warn on first launch:
 
 - **macOS:** after copying to Applications, run `xattr -cr /Applications/Messenger.app`, then open it normally. Native notifications require a signed build and will not appear.
 - **Windows:** on the SmartScreen dialog, click **More info → Run anyway**.
@@ -102,37 +102,10 @@ git push --follow-tags   # the tag push triggers build + GitHub Release
 
 The tag must match the `package.json` version. To build without releasing, run the workflow manually from the Actions tab; installers are attached to the run as artifacts.
 
-### Code Signing and Notarization
+### Code Signing
 
-**macOS:**
-
-To distribute on macOS, you need:
-1. Apple Developer Program membership ($99/year)
-2. Developer ID Application certificate
-3. App-specific password for notarization
-
-Set environment variables:
-
-```bash
-export APPLE_ID="your@email.com"
-export APPLE_APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
-export APPLE_TEAM_ID="TEAM123456"
-```
-
-Then build:
-
-```bash
-npm run build:mac
-```
-
-The app will be automatically signed and notarized.
-
-**Windows:**
-
-Code signing on Windows is optional but recommended for distribution:
-1. Purchase a code signing certificate (e.g., from DigiCert, Sectigo)
-2. Configure certificate path in environment variables
-3. No additional setup required for unsigned builds (will show SmartScreen warning)
+Builds are intentionally unsigned (personal use). macOS apps are ad-hoc signed
+(`build.mac.identity: "-"` in `package.json`); Windows builds are not signed.
 
 ## Keyboard Shortcuts
 
@@ -167,8 +140,8 @@ messenger-desktop/
 │   └── icon.icns        # App icon
 ├── build/
 │   └── entitlements.mac.plist
-└── scripts/
-    └── notarize.js      # Notarization script
+└── .github/workflows/
+    └── release.yml      # CI build & release
 ```
 
 ## Privacy
